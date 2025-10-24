@@ -1,0 +1,4 @@
+selenium==4.*
+gspread==6.*
+google-auth==2.*
+gspread-formatting==1.*
