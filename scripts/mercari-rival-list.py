@@ -76,6 +76,9 @@ def build_driver(headless: bool = False) -> webdriver.Chrome:
     opts = Options()
     if headless:
         opts.add_argument("--headless=new")
+    # CI安定化
+    opts.add_argument("--no-sandbox")
+    opts.add_argument("--disable-dev-shm-usage")
     opts.add_argument("--disable-gpu")
     opts.add_argument("--disable-extensions")
     opts.add_argument("--disable-background-networking")
@@ -84,7 +87,15 @@ def build_driver(headless: bool = False) -> webdriver.Chrome:
     opts.add_argument("--blink-settings=imagesEnabled=false")
     opts.add_argument("--renderer-process-limit=2")
     opts.add_argument("--window-size=1200,800" if headless else "--window-size=1920,1080")
-    return webdriver.Chrome(options=opts)  # Selenium Manager が自動解決
+    # ページ読込を“早めに完了扱い”
+    opts.page_load_strategy = "eager"
+    # ログ少し詳細
+    opts.add_argument("--enable-logging")
+    opts.add_argument("--v=1")
+    driver = webdriver.Chrome(options=opts)
+    driver.set_page_load_timeout(45)   # 90→45
+    return driver
+
 
 def safe_click(driver, by, value, retries=3, timeout=90):
     for i in range(retries):
@@ -190,7 +201,7 @@ def collect_items_current_page(driver):
 # ===================== 主処理（ターゲット1件分） =====================
 def run_once(target: Dict[str, Any], headless: bool) -> None:
     driver = build_driver(headless=headless)
-    wait = WebDriverWait(driver, 90)
+    wait = WebDriverWait(driver, 30)
     try:
         print("\n==== Start target ====")
         # ---- 収集 ----
